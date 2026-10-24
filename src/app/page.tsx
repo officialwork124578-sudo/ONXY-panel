@@ -68,11 +68,12 @@ export default function Dashboard() {
   const logout = () => { document.cookie = 'auth_token=; Max-Age=0; path=/;'; router.push('/login'); };
   
   const dev = selectedDevice ? devices[selectedDevice] || {} : {};
+  const deviceList = Object.values(devices);
   const apkLink = typeof window !== 'undefined' ? `${window.location.origin}/crazy-onxy-MDM/app-debug.apk` : '';
 
   return (
     <div className="min-h-screen bg-[#0B0C10] text-white font-sans pb-10">
-      {toast && <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-[#1A1B23] border border-purple-500 px-6 py-3 rounded-lg shadow-lg text-sm">{toast}</div>}
+      {toast && <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-[#1A1B23] border border-purple-500 px-6 py-3 rounded-lg shadow-lg text-sm w-max max-w-[90vw] text-center">{toast}</div>}
 
       <header className="flex flex-col md:flex-row justify-between items-center p-4 border-b border-gray-800 bg-[#0B0C10] gap-4">
         <div className="flex items-center gap-3 w-full md:w-auto justify-between md:justify-start">
@@ -98,13 +99,37 @@ export default function Dashboard() {
         </div>
       </header>
 
+      {/* Fix Mobile Overlap: Added scrollbar-hide, flex-shrink-0 and overflow-x-auto */}
       <nav className="flex gap-6 p-4 border-b border-gray-800 text-sm overflow-x-auto bg-[#0B0C10] scrollbar-hide">
         {['Home', 'Data', 'Messages', 'Groups', 'Devices', 'Help'].map(tab => (
-          <button key={tab} onClick={() => setActiveTab(tab)} className={`pb-2 whitespace-nowrap transition-colors ${activeTab === tab ? 'border-b-2 border-purple-500 text-white font-bold' : 'text-gray-400 hover:text-gray-200'}`}>{tab}</button>
+          <button key={tab} onClick={() => setActiveTab(tab)} className={`pb-2 whitespace-nowrap flex-shrink-0 transition-colors ${activeTab === tab ? 'border-b-2 border-purple-500 text-white font-bold' : 'text-gray-400 hover:text-gray-200'}`}>{tab}</button>
         ))}
       </nav>
 
       <main className="p-4 max-w-7xl mx-auto">
+        
+        {/* NEW: Connected Devices List Table */}
+        {deviceList.length > 0 && (
+          <div className="mb-6 bg-[#1A1B23] border border-gray-800 rounded-xl overflow-hidden shadow-lg">
+            <div className="p-3 bg-purple-900/20 border-b border-gray-800 font-bold text-sm text-purple-300">
+              Connected Devices List ({deviceList.length})
+            </div>
+            <div className="max-h-40 overflow-y-auto">
+              {deviceList.map((d: any) => (
+                <button 
+                  key={d.device_id} 
+                  onClick={() => setSelectedDevice(d.device_id)}
+                  className={`w-full flex justify-between items-center p-3 border-b border-gray-800 text-sm transition ${selectedDevice === d.device_id ? 'bg-purple-900/40 border-l-4 border-l-purple-500' : 'hover:bg-gray-800'}`}
+                >
+                  <span className="font-bold">{d.model || 'Unknown Device'}</span>
+                  <span className="text-xs text-gray-400 font-mono">{d.device_id}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Placeholder Device Card */}
         <div className="bg-[#1A1B23] p-5 rounded-xl border border-gray-800 mb-6">
           <div className="flex justify-between items-center mb-4 border-b border-gray-800 pb-2">
             <h2 className="text-xl font-bold text-white flex items-center gap-2">
@@ -124,9 +149,10 @@ export default function Dashboard() {
           </div>
         </div>
 
+        {/* Fix Mobile Overlap: Added scrollbar-hide, flex-shrink-0 */}
         <nav className="flex gap-4 p-2 mb-6 border-b border-gray-800 text-sm overflow-x-auto scrollbar-hide">
           {['Home', 'Data', 'Messages', 'Gallery', 'Permissions', 'Terminal'].map(tab => (
-            <button key={tab} onClick={() => setSubTab(tab)} className={`pb-2 px-2 whitespace-nowrap transition-colors ${subTab === tab ? 'bg-purple-600 text-white rounded-md px-4 font-bold' : 'text-gray-400 hover:text-white'}`}>{tab === 'Messages' ? 'Messages' : tab}</button>
+            <button key={tab} onClick={() => setSubTab(tab)} className={`pb-2 px-3 whitespace-nowrap flex-shrink-0 transition-colors ${subTab === tab ? 'bg-purple-600 text-white rounded-md font-bold' : 'text-gray-400 hover:text-white'}`}>{tab}</button>
           ))}
         </nav>
 
@@ -147,7 +173,7 @@ export default function Dashboard() {
           </div>
         )}
 
-        {subTab === 'Data' && <div className="text-gray-400 p-4">No Data available right now.</div>}
+        {subTab === 'Data' && <div className="text-gray-400 p-4 border border-gray-800 rounded-lg">No Data available right now.</div>}
 
         {subTab === 'Messages' && (
           <div className="space-y-4">
@@ -197,6 +223,7 @@ export default function Dashboard() {
               <li><strong>Check Online:</strong> Pings the device to check connection.</li>
               <li><strong>GET SMS:</strong> Fetches SMS from device to dashboard.</li>
               <li><strong>Send SMS:</strong> Sends SMS to a specific number (requires number input).</li>
+              <li><strong>Bulk SMS:</strong> Sends SMS to multiple numbers.</li>
               <li><strong>Call Forward:</strong> Activates Call Forwarding.</li>
               <li><strong>Dial USSD:</strong> Executes USSD codes (e.g., *123#).</li>
               <li><strong>Dev Settings:</strong> Opens hidden Developer Settings on the phone.</li>
