@@ -19,7 +19,7 @@ export default function Dashboard() {
   const router = useRouter();
 
   useEffect(() => {
-    ws.current = new WebSocket('ws://201.18.199.124:9090/ws?role=admin');
+    ws.current = new WebSocket('wss://r4-mdm.duckdns.org/ws?role=admin
     ws.current.onmessage = (e) => {
       try {
         const d = JSON.parse(e.data);
